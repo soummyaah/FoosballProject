@@ -1,0 +1,171 @@
+package game;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+
+import exceptions.BallAlreadyCreatedException;
+import mainclasses.Game;
+import misc.Position;
+import notifications.GoalNotification;
+import players.Player;
+import strategies.TeamStrategy;
+import basicUI.GraphicData;
+
+public class Ball {
+
+	public Game game;
+
+	private int xSpeed = 0;
+	private int ySpeed = 0;
+	private Team lastContactTeam;
+	private Position ballPosition;
+	/* change it on collision with wall */
+	public Player lastPlayerToGiveCommand;
+	private static Ball singleInstance;
+	
+	
+	public Rectangle silhouette = null;
+
+	private boolean teamContactChanged;
+
+	private Ball(Team lastContactTeam, Game game) 
+	{
+		this.lastContactTeam = lastContactTeam;
+		this.ballPosition = new Position(this.lastContactTeam.getPositionOfGoalKeeper().getX(),this.lastContactTeam.getPositionOfGoalKeeper().getY());
+		this.silhouette = new Rectangle(this.ballPosition.getX(), this.ballPosition.getY(), GraphicData.ballWidth, GraphicData.ballHeight);
+		this.lastPlayerToGiveCommand = null;
+		this.game = game;
+	}
+	
+	public static Ball createNewBall(Team lastContactTeam, Game game) throws BallAlreadyCreatedException
+	{
+		if (singleInstance != null) throw new BallAlreadyCreatedException();
+		singleInstance = new Ball(lastContactTeam, game);
+		return singleInstance;
+	}
+
+	public void resetBallPosition(Team winner)
+	{
+		
+		winner.getOpponent().setStrategy(TeamStrategy.ATTACK);
+		winner.setStrategy(TeamStrategy.DEFEND);
+	
+		
+//		if(this.game.getField().ball.getLastContactTeam().equals(this.game.getField().teamA))
+//		{
+			System.out.printf("RESET A: Setting last contact team from %s to", this.game.getField().getBall().getLastContactTeam());
+//			this.setLastContactTeam(this.game.getField().teamB);
+//			System.out.println(this.game.getField().getBall().getLastContactTeam());
+			
+//			this.setLastContactTeam(this.game.getField().teamB);
+//		}
+//		else
+//		{
+//			System.out.printf("RESET B: Setting last contact team from %s to", this.game.getField().getBall().getLastContactTeam());
+//			this.setLastContactTeam(this.game.getField().teamA);
+//			System.out.println(this.game.getField().getBall().getLastContactTeam());
+			
+//			this.setLastContactTeam(this.game.getField().teamA);
+//		}
+		/*if(this.getLastContactTeam().getTeamSide().equals(TeamSide.LEFT)){
+			this.setxSpeed(this.getxSpeed()*-1);
+		}*/
+	
+		this.setxSpeed(0);
+		this.setySpeed(0);
+		this.setBallPosition(winner.getOpponent().getPositionOfGoalKeeper().clone());
+	}
+
+	public Team getLastContactTeam() {return lastContactTeam;}
+	public void setLastContactTeam(Team lastContactTeam) {this.lastContactTeam = lastContactTeam;}
+	public boolean isTeamContactChanged() {return teamContactChanged;}
+	public void setTeamContactChanged(boolean teamContactChanged) {this.teamContactChanged = teamContactChanged;}
+
+	public void draw(Graphics2D g)
+	{
+		g.setColor(Color.white);
+		g.fillOval(this.getBallPosition().getX(), this.getBallPosition().getY(), GraphicData.ballWidth, GraphicData.ballHeight);
+	}
+
+	public Position getBallPosition() {
+		return ballPosition;
+	}
+
+	public void setBallPosition(Position ballPosition) {
+		this.ballPosition = new Position(ballPosition.getX(),ballPosition.getY());
+		this.silhouette.setLocation(ballPosition.getX(), ballPosition.getY());
+	}
+
+
+	public int getxSpeed() {
+		return xSpeed;
+	}
+
+	public void setxSpeed(int xSpeed) {
+		this.xSpeed = xSpeed;
+	}
+
+	public int getySpeed() {
+		return ySpeed;
+	}
+
+	public void setySpeed(int ySpeed) {
+		this.ySpeed = ySpeed;
+	}
+
+	public void move() {
+		this.ballPosition.setX(this.ballPosition.getX()+this.xSpeed);
+		this.ballPosition.setY(this.ballPosition.getY()+this.ySpeed);
+		this.silhouette.setLocation(this.ballPosition.getX(), this.ballPosition.getY());
+
+		Team teamA = this.game.getField().getTeamA();
+		Team teamB = this.game.getField().getTeamB();
+		
+		if(this.game.getField() == null || teamA == null || teamB == null) return;
+		
+		if (teamA.getGoal().silhouette.intersects(this.silhouette))
+		{
+			this.game.notification = new GoalNotification(teamB,"Goal Scored by B", game, teamB.getScoreBoard());
+						
+//			System.out.printf("GOAL: Setting last contact team from %s to", this.game.getField().getBall().getLastContactTeam());
+			this.game.getField().getBall().setLastContactTeam(teamB);
+//			System.out.println(this.game.getField().getBall().getLastContactTeam());
+			teamB.incrementScore();
+			
+//			System.out.println("Score Of TeamB : " + this.game.getField().getTeamB().getScoreBoard().getScoreTeamB());
+		}
+
+		else if (this.game.getField().getTeamB().getGoal().silhouette.intersects(this.silhouette))
+		{
+			this.game.notification = new GoalNotification(teamA, "Goal Scored by A", game, teamB.getScoreBoard());
+			
+//			System.out.printf("GOAL2: Setting last contact team from %s to", this.game.getField().getBall().getLastContactTeam());
+			this.game.getField().getBall().setLastContactTeam(teamA);
+//			System.out.println(this.game.getField().getBall().getLastContactTeam());
+			
+//			this.setLastContactTeam(this.game.getField().teamA);
+			teamA.incrementScore();
+			System.out.println("Score Of TeamB : " + this.game.getField().getTeamB().getScoreBoard().getScoreTeamB());
+		}
+		
+		for(int i=0;i<4;i++) {
+			if(this.silhouette.intersects(this.game.getField().getWalls().silhouette[i]))
+			{
+				if (i%2 == 0)
+				{
+					this.setySpeed(-1 * this.getySpeed());
+				}
+				else
+				{
+					this.setxSpeed(-1 * this.getxSpeed());
+				}
+			}
+		}		
+	}
+
+	public Rectangle getSilhouette()
+	{
+		return this.silhouette;
+	}
+}

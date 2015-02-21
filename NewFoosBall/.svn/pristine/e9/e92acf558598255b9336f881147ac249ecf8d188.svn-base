@@ -1,0 +1,180 @@
+package game;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.util.ArrayList;
+
+import mainclasses.Game;
+import misc.Position;
+import players.Attacker;
+import players.Defender;
+import players.Goalkeeper;
+import players.Midfielder;
+import players.Player;
+import strategies.Playable;
+import strategies.TeamStrategy;
+import basicUI.GraphicData;
+import exceptions.ShouldBeOverridenException;
+import exceptions.UnsupportedMethodCalledException;
+import exceptions.YouMessedUpException;
+
+public class Stick implements Playable, Moveable
+{
+	double offset;
+	int noOfPlayers;
+	private Player[] players;
+	float moveFactor;
+	Team team;
+	Field field;
+	int xPosition;
+	public static Game game;
+	
+	private static int id;	
+	TeamStrategy teamStrategy;
+	
+	public Stick(Team team, TeamStrategy teamStrategy, int numberOfPlayers, Class playerType)
+	{
+		 this.players = new Player[numberOfPlayers];
+		 this.noOfPlayers = numberOfPlayers;
+		 this.team = team;
+		 this.teamStrategy = teamStrategy;
+		 this.offset = 0;
+		 // TODO might be wrong over here..!! think about the boxes of the players
+		 // check mathematical formuale practically
+		 this.moveFactor = (float)GraphicData.playingAreaHeight / (GraphicData.granuality * (this.noOfPlayers + 1));
+		 
+		 if(playerType.equals(Goalkeeper.class))
+		 {
+			 this.moveFactor = (float)GraphicData.goalHeight / (GraphicData.granuality * (this.noOfPlayers + 1)); 
+		 }
+		 
+		 ArrayList<Class> temp_mapper = new ArrayList<>();
+		 temp_mapper.add(Goalkeeper.class);
+		 temp_mapper.add(Defender.class);
+		 temp_mapper.add(Midfielder.class);
+		 temp_mapper.add(Attacker.class);
+		 
+		 this.xPosition = createNewPosition(playerType, temp_mapper, 0).getX();
+		 
+		 for (int i = 0; i < numberOfPlayers; i++)
+		 {
+			 // TODO
+			try
+			{
+				players[i] = (Player) playerType.newInstance();
+				players[i].makePlayerAlive(new Object[]{
+						this.team.toString() + "-" + id,
+						this.team,		// team
+						game,			// game
+						this,			// stick
+						createNewPosition(
+								playerType, temp_mapper, i),	// position
+						teamStrategy,
+				});
+				
+				id++;
+			} catch (InstantiationException |
+					IllegalAccessException |
+					YouMessedUpException e)
+			{
+				e.printStackTrace();
+				System.exit(1);
+			}
+		 }
+	}
+
+	public TeamStrategy getTeamStrategy(){return teamStrategy;}
+
+	public void setTeamStrategy(TeamStrategy teamStrategy)
+	{
+		this.teamStrategy = teamStrategy;
+	}
+
+	@Override
+	public boolean play() throws ShouldBeOverridenException,
+			UnsupportedMethodCalledException
+	{
+		for (Player player: players)
+			player.play();
+		
+		return true;
+	}
+
+	@Override
+	public void move(boolean up) throws UnsupportedMethodCalledException
+	{
+//		if(up) {
+//			this.offset += this.moveFactor;
+//		} else {
+//			this.offset -= this.moveFactor;
+//		}
+//		if(Math.abs(this.offset) > (GraphicData.playingAreaHeight/(this.noOfPlayers+1))){
+//			return;
+//		}
+//		else 
+//		{
+			for(Player player: this.players)
+				player.moveY((int)Math.round(this.moveFactor * (up ? -1: 1)));
+//		}
+	}
+
+	@Override
+	public void moveX(int howMuch) throws UnsupportedMethodCalledException
+	{
+		throw new UnsupportedMethodCalledException();
+	}
+
+	@Override
+	public void moveY(int howMuch) throws UnsupportedMethodCalledException
+	{
+		throw new UnsupportedMethodCalledException();
+	}
+
+	public Player[] getPlayers() {
+		return players;
+	}
+
+	public void setPlayers(Player[] players) {
+		this.players = players;
+	}
+
+	public void draw(Graphics2D g)
+	{
+		g.setColor(Color.darkGray);
+		g.fillRect(this.xPosition + GraphicData.playerWidth/2 - GraphicData.stickWidth/2, 0,
+				GraphicData.stickWidth, GraphicData.playingAreaHeight);
+
+		for(Player player: this.players)
+		{				
+			player.draw((Graphics2D)g);
+		}
+	}
+	
+	private Position createNewPosition(Class playerType, ArrayList<Class> temp_mapper, int i)
+	{
+		int y;
+		y = ((GraphicData.playingAreaHeight * (i+1)) / (this.noOfPlayers + 1));
+		return new Position(createXPosition(playerType, temp_mapper),y);
+	}
+	
+	private int createXPosition(Class playerType, ArrayList<Class> temp_mapper) {
+		int x;
+		x = (GraphicData.playingAreaWidth/9);
+		if(this.team.teamSide.equals(TeamSide.LEFT)){
+			if(temp_mapper.indexOf(playerType)>0) {
+				x = x*2*temp_mapper.indexOf(playerType);
+			}
+		} else {
+			if(temp_mapper.indexOf(playerType)<=1) {
+				x = x * Math.abs(8-temp_mapper.indexOf(playerType));
+			} else if(temp_mapper.indexOf(playerType)==2) {
+				x = x*5;
+			} else {
+				x = x*3;
+			}
+		}
+		return x ;//- GraphicData.playerWidth/2 + GraphicData.stickWidth/2;
+
+	}
+
+}

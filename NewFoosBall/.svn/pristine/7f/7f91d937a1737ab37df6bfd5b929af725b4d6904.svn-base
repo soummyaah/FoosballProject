@@ -1,0 +1,366 @@
+package players;
+
+import exceptions.ShouldBeOverridenException;
+import exceptions.UnsupportedMethodCalledException;
+import exceptions.YouMessedUpException;
+import game.Ball;
+import game.Moveable;
+import game.Stick;
+import game.Team;
+import game.TeamSide;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+
+import mainclasses.Game;
+import misc.GameMath;
+import misc.Position;
+import misc.Randomiser;
+import strategies.PlayingStrategy;
+import strategies.TeamStrategy;
+import basicUI.GraphicData;
+
+public abstract class Player implements PlayingStrategy, Moveable
+{
+	String name;
+	Team team;
+	Game game;
+	Stick stick;
+	
+	private Rectangle silhouette = null;
+	
+	Position playerPosition;
+	
+	public Position getPlayerPosition(){return playerPosition;}
+	public void setPlayerPosition(Position pos)
+	{
+		this.playerPosition = pos;
+		this.silhouette.x = pos.getX();
+		this.silhouette.y = pos.getY();
+	}
+
+	private int minKickSpeed  = Randomiser.getRandomInt(1, 2);
+	private int maxKickSpeed  = Randomiser.getRandomInt(3, 5);
+	
+	private TeamStrategy teamStrategy;
+	
+	public Player() {
+	}
+
+	/**wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww	 * 
+	 * @param name
+	 * @param team
+	 * @param game
+	 * @param stick
+	 * @param position
+	 * @param speed
+	 * @param strategy
+	 * @throws YouMessedUpException 
+	 */
+	public void makePlayerAlive(Object... args) throws YouMessedUpException
+	{
+		if (args.length != 6) throw new YouMessedUpException();
+				this.name = String.valueOf(args[0]);
+		this.team = (Team) args[1];
+		this.game = (Game) args[2];
+		this.stick = (Stick) args[3];
+		this.playerPosition= (Position) args[4];
+		this.teamStrategy = (TeamStrategy) args[5];
+		
+		this.silhouette = new Rectangle(this.playerPosition.getX(), this.playerPosition.getY(),
+				GraphicData.playerWidth, GraphicData.playerWidth);
+	}
+
+	public TeamStrategy getTeamStrategy(){return this.team.getStrategy();}
+	public void setTeamStrategy(TeamStrategy teamStrategy){this.teamStrategy = teamStrategy;}
+
+	private boolean testAndChangeTeamStrategy()
+	{	
+//		System.out.println("Last contact team before updating: " + this.game.getField().getBall().getLastContactTeam());
+		
+		
+		/*
+		 * If present state is defend and last team to touch is mine, then change to attack
+		 * If present state is defend and last team is not mine, then do nothing
+		 * If present state is attack, to simply pass
+		 * Always set last contact team to my team
+		 */
+		
+		Ball ball = this.game.getField().getBall();
+		if(this.team.getStrategy().equals(TeamStrategy.DEFEND))
+		{
+			if(ball.getLastContactTeam().equals(this.team))
+			{
+//				this.game.notification = new ChangeTeamStrategyNotification(game);
+				
+
+				
+//				System.out.printf("TESTANDSET:  Setting last contact team from %s to", this.game.getField().getBall().getLastContactTeam());
+//				ball.setLastContactTeam(this.team);
+
+				System.out.println(this.team + ": " + this.team.getStrategy());
+				System.out.println(this.team.getOpponent() + ": " + this.team.getOpponent().getStrategy());
+				
+				this.team.setStrategy(this.team.getStrategy().getInverseStrategy());
+				this.team.getOpponent().setStrategy(this.team.getOpponent().getStrategy().getInverseStrategy());
+				
+				System.out.println(this.team + ": " + this.team.getStrategy());
+				System.out.println(this.team.getOpponent() + ": " + this.team.getOpponent().getStrategy());
+				
+				System.out.println(this.game.getField().getBall().getLastContactTeam());
+				return true;
+			}
+		}
+//		ball.setLastContactTeam(this.team);
+		
+		
+		
+//		System.out.println("Last contact team after updating: " + this.game.getField().getBall().getLastContactTeam());
+		
+		
+		return true;
+		
+//		if (this.game.getField().getBall().getLastContactTeam() != this.team)
+//		{
+//			this.game.notification = new ChangeTeamStrategyNotification(game);
+//			System.out.println("Last CREATING NOTIFICATION TO CHANGE STRATEGY: ");
+//		}
+		
+		
+//		this.game.getField().getBall().setLastContactTeam(this.team);
+	}
+	
+	public boolean play() throws ShouldBeOverridenException, UnsupportedMethodCalledException
+	{
+		if (!GameMath.playerHasBall(this, this.game.getField().getBall())) return false;
+		if (!(this instanceof Goalkeeper))
+		{
+			if (this.game.getField().getBall().lastPlayerToGiveCommand.equals(this))
+			{
+				return false;
+			}
+		}
+//		if (this.game.getField().getBall().lastPlayerToGiveCommand.equals(this) && (!(this instanceof Goalkeeper))) return false;
+		return this.testAndChangeTeamStrategy();
+	}
+
+	public void pass() throws UnsupportedMethodCalledException
+	{
+		Ball ball = this.game.getField().getBall();
+		if (!GameMath.playerHasBall(this, ball)) return;
+		
+		while (!this.equals(ball.lastPlayerToGiveCommand))
+		{
+			Stick nextStick = this.team.nextPassableStick(this.stick);
+			Player passTo = nextStick.getPlayers()[
+	                   Randomiser.getRandomInt(0, nextStick.getPlayers().length-1)];
+			
+			float magnitude = Randomiser.getRandomInt(this.minKickSpeed, this.maxKickSpeed);
+			
+			int x2 = passTo.getPlayerPosition().getX();
+			int y2=  passTo.getPlayerPosition().getY();
+			int x1 = this.playerPosition.getX();
+			int y1 = this.playerPosition.getY();
+						
+			int newxSpeed;
+			int newySpeed;
+			
+
+			double radians = GameMath.computeAngle(x1, y1, x2, y2);
+			
+			
+			
+			//double rad = GameMath.angleToRad(angle);
+			
+			//int intAngle = (int)Math.round(angle);
+			
+			double selfError = 1+this.game.getContext().getSelfError();
+			double compError = 1+this.game.getContext().getCompError();
+			
+			//angle = convertAsPerQuadrant(angle);
+			
+			newxSpeed = (int)Math.round(magnitude*Math.cos(radians));
+			if(this.team.equals(this.game.getField().getTeamA())){
+				newySpeed = (int)Math.round(magnitude*Math.sin(radians)*selfError);
+			}
+			else
+			{
+				newySpeed = (int)Math.round(magnitude*Math.sin(radians)*compError);
+
+			}
+			newySpeed *= -1;
+			ball.setxSpeed(newxSpeed);
+			ball.setySpeed(newySpeed);
+			
+			System.out.println(this + " has ball..!!"
+					+ "context is " + this.team.getStrategy() + ". passing to " + passTo);
+
+			System.out.println("\n");
+			System.out.println("\n");
+			System.out.println(radians);
+			System.out.println("x1: "+x1);
+			System.out.println("x2: "+x2);
+			System.out.println("y1: "+y1);
+			System.out.println("y2: "+y2);
+			System.out.println("\n");
+			System.out.println("\n");
+
+			
+			ball.lastPlayerToGiveCommand = this;
+//			this.testAndChangeTeamStrategy();
+//			ball.setLastContactTeam(this.team);
+			
+			System.out.printf("PASS: Setting last contact team from %s to", this.game.getField().getBall().getLastContactTeam());
+			ball.setLastContactTeam(this.team);
+			System.out.println(this.game.getField().getBall().getLastContactTeam());
+		}
+	}
+
+	public void shoot() throws UnsupportedMethodCalledException
+	{
+		Ball ball = this.game.getField().getBall();
+		if (!GameMath.playerHasBall(this, ball)) return;
+		
+		while (!this.equals(ball.lastPlayerToGiveCommand))
+		{	
+			float magnitude = 2*(Randomiser.getRandomInt(this.minKickSpeed, this.maxKickSpeed));
+			
+			int x2 = this.team.getOpponent().getGoal().getGoalPosition().getX();
+			int y2=  this.team.getOpponent().getGoal().getGoalPosition().getY()+GraphicData.goalHeight/2;
+			int x1 = this.playerPosition.getX();
+			int y1 = this.playerPosition.getY();
+		
+			
+			int newxSpeed;
+			int newySpeed;
+			
+			float slope = (y2-y1)/(x2-x1);
+
+			double radians = GameMath.computeAngle(x1, y1, x2, y2);
+			
+			//double rad = GameMath.angleToRad(angle);
+						
+			double selfError = 1+this.game.getContext().getSelfError();
+			double compError = 1+this.game.getContext().getCompError();
+
+			
+			//angle = convertAsPerQuadrant(angle);
+
+			
+			newxSpeed = (int)Math.round(magnitude*Math.cos(radians));
+			if(this.team.equals(this.game.getField().getTeamA())){
+				newySpeed = (int)Math.round(magnitude*Math.sin(radians)*selfError);
+			}
+			else
+			{
+				newySpeed = (int)Math.round(magnitude*Math.sin(radians)*compError);
+
+			}
+			newySpeed *= -1;
+			
+			
+			ball.setxSpeed(newxSpeed);
+			ball.setySpeed(newySpeed);
+			
+			System.out.println(this + " has ball..!!"
+					+ "context is " + this.team.getStrategy() + ". Shooting");
+			
+			System.out.println("\n");
+			System.out.println("\n");
+			System.out.println(radians);
+			System.out.println("x1: "+x1);
+			System.out.println("x2: "+x2);
+			System.out.println("y1: "+y1);
+			System.out.println("y2: "+y2);
+			System.out.println(newxSpeed);
+			System.out.println(newySpeed);
+			System.out.println("\n");
+			System.out.println("\n");
+			
+			
+			ball.lastPlayerToGiveCommand = this;
+//			this.testAndChangeTeamStrategy();
+			
+			System.out.printf("SHOOT: Setting last contact team from %s to", this.game.getField().getBall().getLastContactTeam());
+			ball.setLastContactTeam(this.team);
+			System.out.println(this.game.getField().getBall().getLastContactTeam());
+			
+//			ball.setLastContactTeam(this.team);
+		}
+	}
+
+	public void block() throws UnsupportedMethodCalledException
+	{
+		Ball ball = this.game.getField().getBall();
+		
+		// TODO
+		if (!GameMath.playerHasBall(this, ball)) return;
+
+		while (!this.equals(ball.lastPlayerToGiveCommand))
+		{				
+
+			ball.setxSpeed(-1*ball.getxSpeed());			
+			
+			System.out.println(this + " has ball..!!"
+					+ "context is " + this.team.getStrategy() + ". blocking");
+//			System.out.println(this + " has ball..!! blocking" );
+			
+			ball.lastPlayerToGiveCommand = this;
+//			this.testAndChangeTeamStrategy();
+			
+			System.out.printf("BLOCK: Setting last contact team from %s to", this.game.getField().getBall().getLastContactTeam());
+			ball.setLastContactTeam(this.team);
+			System.out.println(this.game.getField().getBall().getLastContactTeam());
+//			ball.setLastContactTeam(this.team);
+		}
+	}
+
+	@Override
+	public void moveX(int howMuch) throws UnsupportedMethodCalledException
+	{
+		throw new UnsupportedMethodCalledException();
+	}
+
+	@Override
+	public void moveY(int howMuch) throws UnsupportedMethodCalledException
+	{
+		this.playerPosition.moveY(howMuch);
+		this.silhouette.setLocation(this.silhouette.x, this.silhouette.y + howMuch);
+	}
+	
+	public void draw(Graphics2D g)
+	{
+		if (GameMath.playerHasBall(this, this.game.getField().getBall()))
+		{
+			g.setColor(Color.BLUE);
+			g.drawString(this.team.getStrategy().toString(), this.playerPosition.getX(),
+					this.playerPosition.getY());
+			g.setColor(Color.YELLOW);
+		}
+		else
+		{
+			if(this.team.teamSide.equals(TeamSide.LEFT)) g.setColor(Color.blue);
+			else g.setColor(Color.red);
+		}
+		g.fillRect(this.playerPosition.getX(), this.playerPosition.getY(),
+				GraphicData.playerWidth, GraphicData.playerWidth);
+	}
+
+	@Override
+	public void move(boolean up) throws UnsupportedMethodCalledException
+	{
+		throw new UnsupportedMethodCalledException();
+	}
+
+	public Rectangle getSilhouette()
+	{
+		return this.silhouette;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return this.getClass().getSimpleName() + " " + this.name;
+	}
+}

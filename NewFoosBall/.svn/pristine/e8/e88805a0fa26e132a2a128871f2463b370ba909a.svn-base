@@ -1,0 +1,32 @@
+package game;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+
+import basicUI.GraphicData;
+
+public class Walls {
+	public Rectangle[] silhouette = null;
+	public Walls() {
+		System.out.println("Creating Walls");
+		silhouette = new Rectangle[4];
+		this.silhouette[0] = new Rectangle(0, -5, GraphicData.playingAreaWidth  + 50, GraphicData.playingAreaHeight / 14 );
+		this.silhouette[1] = new Rectangle(-5, 0, GraphicData.playingAreaWidth / 15, GraphicData.playingAreaHeight + 6);
+		this.silhouette[2] = new Rectangle(0, GraphicData.playingAreaHeight - (GraphicData.playingAreaHeight / 7), GraphicData.playingAreaWidth + 10, 50);
+		this.silhouette[3] = new Rectangle(GraphicData.playingAreaWidth -  (GraphicData.playingAreaHeight / 8), 0, 50, GraphicData.playingAreaHeight + 6);
+//		System.out.println("Walls Created");
+	}
+	public Rectangle[] getSilhouette() {
+		return silhouette;
+	}
+	
+	public void draw(Graphics2D g) 
+	{
+		for(Rectangle r : silhouette)
+		{
+			g.setColor(Color.YELLOW);
+			g.drawRect(r.x, r.y, r.width, r.height);
+		}
+	}
+}

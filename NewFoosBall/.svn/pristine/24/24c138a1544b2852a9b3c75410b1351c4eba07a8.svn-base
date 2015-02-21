@@ -1,0 +1,27 @@
+package misc;
+
+import java.awt.Color;
+import java.awt.Graphics2D;
+
+public class Timer
+{
+	public int clock;
+	public Timer(){
+		this.clock = 0;
+	}
+	
+	public int getClock() {
+		return clock;
+	}
+
+	public void setClock(int clock) {
+		this.clock = clock;
+	}
+	
+	public void draw(Graphics2D g) 
+	{
+			g.setColor(Color.pink);
+			g.drawString(Integer.toString(this.getClock()), 79.5F, 220.0F);
+	}
+	
+}

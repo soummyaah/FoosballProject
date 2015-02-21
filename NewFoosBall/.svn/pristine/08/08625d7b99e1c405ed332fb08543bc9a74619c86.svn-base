@@ -1,0 +1,70 @@
+package mainclasses;
+
+import difficulty.Difficulty;
+import exceptions.YouMessedUpException;
+import game.Ball;
+import game.Field;
+import game.Formation;
+import game.Stick;
+import game.Team;
+import game.TeamSide;
+import misc.Coin;
+import misc.CoinSide;
+import misc.ScoreBoard;
+import misc.Timer;
+import notifications.Notification;
+
+public class Game
+{
+	private Timer timer;
+	Team teamA;
+	Team teamB;
+	private Field field;
+	Ball ball;
+	CoinSide selfSide;
+	ScoreBoard scoreBoard;
+	Difficulty difficulty;
+	
+	public ScoreBoard getScoreBoard() {
+		return scoreBoard;
+	}
+
+	public volatile Notification notification;
+	
+	public Game(Difficulty difficulty, Formation formationA, TeamSide teamSide, CoinSide coinSide)
+	{
+		try{
+			this.difficulty = difficulty;
+			Stick.game =  this;
+			selfSide = new Coin().toss();
+			this.scoreBoard = new ScoreBoard();
+			this.teamA = new Team("TeamA", formationA, coinSide, teamSide, this, scoreBoard);		// TODO
+			this.teamB = new Team("TeamB", Formation.getRandomFormation(), coinSide.getOtherSide(), teamSide.getOtherSide(), this, scoreBoard);		// TODO
+			this.ball  = new Ball((teamA.getCoinSide().equals(CoinSide.HEADS)) ? teamA : teamB, this);
+			this.field = new Field(teamA, teamB, ball);
+			this.timer = new Timer();
+		}
+		catch (YouMessedUpException e){
+			e.printStackTrace();
+			System.exit(0);
+		}
+		
+		this.notification = null;
+	}
+
+	public Field getField()
+	{
+		return this.field;
+	}
+
+	public Timer getTimer() {
+		return timer;
+	}
+
+	public void setTimer(Timer timer) {
+		this.timer = timer;
+	}
+
+	public void setTeamA(Team teamA) {this.teamA = teamA;}
+
+}

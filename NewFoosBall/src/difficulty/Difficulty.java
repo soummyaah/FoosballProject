@@ -1,0 +1,10 @@
+package difficulty;
+
+public interface Difficulty { //strategy
+	
+	
+	//using strategy pattern
+	
+	public double getSelfError();
+	public double getCompError();
+}

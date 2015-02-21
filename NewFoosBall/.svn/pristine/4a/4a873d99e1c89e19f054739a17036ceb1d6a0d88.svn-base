@@ -1,0 +1,234 @@
+package basicUI;
+
+import game.Formation;
+import game.TeamSide;
+
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+
+import mainclasses.Game;
+import mainclasses.Start;
+import misc.CoinSide;
+import difficulty.DifficultyContext;
+import difficulty.EasyDifficulty;
+import difficulty.HardDifficulty;
+import difficulty.MediumDifficulty;
+import difficulty.YouLooseDifficulty;
+
+public class SplashScreen extends JFrame{
+		
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public SplashScreen() {
+		setTitle("New Game!");
+		setSize(500,270);
+		setLocationRelativeTo(null);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		
+		/*
+		 * TeamA Panel
+		 * contains statusLabel, teamName
+		 */		
+		JPanel teamA = new JPanel();
+		JLabel teamName = new JLabel("Choose Formation for own Team!");
+		teamA.add(teamName);
+		this.add(teamA);
+		
+		/*
+		 * teamASide Panel
+		 * contains leftSide, rightSide radiobuttons
+		*/
+		
+		JPanel teamASide = new JPanel();
+		final JRadioButton leftSide = new JRadioButton("Left Side", true);
+		final JRadioButton rightSide = new JRadioButton("Right Side");
+		
+		ButtonGroup chooseSide = new ButtonGroup();
+		chooseSide.add(leftSide);
+		chooseSide.add(rightSide);
+		      
+		teamASide.add(leftSide);
+		teamASide.add(rightSide);       
+		this.add(teamASide);
+		
+		/*
+		 * teamDefenders
+		 * contains DefenderLabel, Defenders[4] radio Button
+		*/
+		JPanel teamDefenders = new JPanel();
+		final JLabel DefenderLabel = new JLabel("Defenders");
+		final JRadioButton[] Defenders = new JRadioButton[4];
+		
+		for(int i=0;i<4;i++) {
+			Defenders[i] = new JRadioButton();
+			Defenders[i].setText(String.valueOf(i+3));
+		}
+		
+		teamDefenders.add(DefenderLabel);
+		ButtonGroup chooseDefenders = new ButtonGroup();
+		for(int i=0;i<4;i++) {
+			chooseDefenders.add(Defenders[i]);
+			teamDefenders.add(Defenders[i]);
+		}
+		Defenders[0].setSelected(true);
+		this.add(teamDefenders);
+		
+		/*
+		 * teamMidFielder JPanel
+		 * contains 
+		*/
+		JPanel teamMidFielder = new JPanel();
+		final JLabel MidFielderLabel = new JLabel("MidFielders");
+		final JRadioButton[] MidFielders = new JRadioButton[5];
+		for(int i=0;i<5;i++) {
+			MidFielders[i] = new JRadioButton();
+			MidFielders[i].setText(String.valueOf(i+2));
+		}
+		
+		teamMidFielder.add(MidFielderLabel);
+		ButtonGroup chooseMidFielders = new ButtonGroup();
+		for(int i=0;i<5;i++) {
+			chooseMidFielders.add(MidFielders[i]);
+			teamMidFielder.add(MidFielders[i]);
+		}
+		MidFielders[1].setSelected(true);
+		this.add(teamMidFielder);
+		
+		/*
+		 * teamAttacker Panel
+		 * contains AttackerLabel, Attackers
+		*/
+		JPanel teamAttacker = new JPanel();
+		final JLabel AttackerLabel = new JLabel("Attackers");
+		final JRadioButton[] Attackers = new JRadioButton[4];
+		for(int i=0;i<4;i++) {
+			Attackers[i] = new JRadioButton();
+			Attackers[i].setText(String.valueOf(i+1));
+		}
+		
+		teamAttacker.add(AttackerLabel);
+		ButtonGroup chooseAttackers = new ButtonGroup();
+		for(int i=0;i<4;i++) {
+			chooseAttackers.add(Attackers[i]);
+			teamAttacker.add(Attackers[i]);
+		}
+		Attackers[3].setSelected(true);
+		this.add(teamAttacker);
+		
+		JPanel teamCoinSide = new JPanel();
+		JLabel CoinSideLabel = new JLabel("Heads or Tails!?");
+		final JRadioButton heads = new JRadioButton("Heads", true);
+		final JRadioButton tails = new JRadioButton("Tails");
+		
+		ButtonGroup coinToss = new ButtonGroup();
+		coinToss.add(heads);
+		coinToss.add(tails);
+		
+		teamCoinSide.add(CoinSideLabel);
+		teamCoinSide.add(heads);
+		teamCoinSide.add(tails);       
+		this.add(teamCoinSide);
+		
+		JPanel chooseDifficulty = new JPanel();
+		JLabel difficulty = new JLabel("Choose Difficulty Level");
+		final JRadioButton easy = new JRadioButton("Easy");
+		final JRadioButton medium = new JRadioButton("Medium",true);
+		final JRadioButton hard = new JRadioButton("Hard");
+		final JRadioButton youLose = new JRadioButton("God Mode");
+		
+		ButtonGroup difficultyLevels = new ButtonGroup();
+		difficultyLevels.add(easy);
+		difficultyLevels.add(medium);
+		difficultyLevels.add(hard);
+		difficultyLevels.add(youLose);
+		
+		chooseDifficulty.add(difficulty);
+		chooseDifficulty.add(easy);
+		chooseDifficulty.add(medium);
+		chooseDifficulty.add(hard);
+		chooseDifficulty.add(youLose);
+		this.add(chooseDifficulty);
+		
+		
+		final JLabel errorMessage = new JLabel("Total number of players not equal to 11");
+		this.add(errorMessage);
+		errorMessage.setVisible(false);
+		this.setVisible(true); 
+		setLayout(new BorderLayout());
+		setLayout(new FlowLayout());
+      
+		JButton btnNext = new JButton("Play!");
+		btnNext.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent arg0) {
+
+		    	int totalNumberOfPlayers=0;
+		    	TeamSide teamSide;
+		    	CoinSide coinSide;
+		    	Formation formation;
+		    	DifficultyContext context = null;
+		    	int noOfDefenders = 0, noOfMidFielders = 0, noOfAttackers = 0;
+		    	
+		    	if(leftSide.isSelected()) 	teamSide = TeamSide.LEFT;
+		    	else 				    	teamSide = TeamSide.RIGHT;
+		    	if(heads.isSelected()) 		coinSide = CoinSide.HEADS;
+		    	else				    	coinSide = CoinSide.TAILS;
+		    	
+		    	if(easy.isSelected()) 		context = new DifficultyContext(new EasyDifficulty());
+		    	if(medium.isSelected()) 	context = new DifficultyContext(new MediumDifficulty());	
+		    	if(hard.isSelected()) 		context = new DifficultyContext(new HardDifficulty());
+		    	if(youLose.isSelected()) 	context = new DifficultyContext(new YouLooseDifficulty());	
+		    	
+		    	for(int i=0;i<4;i++) {
+		    		if(Defenders[i].isSelected()==true) {
+		        		noOfDefenders = i+3;
+		    			totalNumberOfPlayers+=i+3;
+		        		System.out.println("Value of defenders set :" + (i+3));
+		        		break;
+		        	}
+		        }
+		        for(int i=0;i<5;i++) {
+		        	if(MidFielders[i].isSelected()==true) {
+		        		noOfMidFielders = i+2;
+		        		totalNumberOfPlayers+=i+2;
+		        		System.out.println("Value of mid Fielders set :" + (i+2));
+		        		break;
+		        	}
+		        }
+		        for(int i=0;i<4;i++) {
+		        	if(Attackers[i].isSelected()) {
+		        		noOfAttackers = i+1; 
+		        		totalNumberOfPlayers+=i+1; 
+		        		System.out.print("Value of attackers set :" + (i+1));
+		        		break;
+		        	}
+		        }
+		        if(totalNumberOfPlayers!=10)
+		        {
+		        	errorMessage.setVisible(true);
+		        	setSize(500, 250);
+		        }
+		    	
+		        else {
+		        	formation = new Formation(noOfDefenders, noOfMidFielders, noOfAttackers);
+		        	Game game = new Game(context,formation, teamSide, coinSide);
+		        	Start secondScreen = new Start(game);
+		        	setVisible(false); // Hide current frame
+		        }
+		    }
+		});
+		this.add(btnNext);
+	}
+}

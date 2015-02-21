@@ -1,0 +1,19 @@
+package basicUI;
+
+import java.awt.Color;
+import java.awt.Graphics;
+
+import javax.swing.JLabel;
+
+public class MyGlassPane extends JLabel{
+	 /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public void paintComponent(Graphics g) {
+//		 setOpaque(false);
+		 g.setColor(Color.BLACK);
+		 g.fillRect(10, 10, 200, 200);  	 
+	 }
+}

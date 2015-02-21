@@ -1,0 +1,46 @@
+package foosballTests;
+
+import game.Ball;
+import game.Formation;
+import game.TeamSide;
+import mainclasses.Game;
+import misc.CoinSide;
+
+import org.testng.annotations.Test;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import difficulty.DifficultyContext;
+import difficulty.EasyDifficulty;
+import exceptions.BallAlreadyCreatedException;
+
+public class WallReflectionsArePerfectinTermsOfXAxis {
+	public Game init() {
+		DifficultyContext context = new DifficultyContext(new EasyDifficulty());
+		Game game=null;
+		try {
+			game = new Game(context, new Formation(4, 3, 3), TeamSide.LEFT, CoinSide.HEADS);
+		} catch (BallAlreadyCreatedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return game;	
+	}
+	
+	@Test
+	public void wallReflectionsArePerfectinTermsOfXAxis() {
+		Game game = init();
+		Ball ball = game.getField().getBall();
+		int initialXSpeed = ball.getxSpeed();
+		for(int i = 0;i<4;i++) 
+		{
+			if(ball.silhouette.intersects(ball.game.getField().getWalls().silhouette[i]))
+			{
+				if (i%2 == 0)		ball.setySpeed(-1 * ball.getySpeed());
+				else				ball.setxSpeed(-1 * ball.getxSpeed());
+			}
+		}	
+		assertThat(ball.getxSpeed(), is(equalTo(initialXSpeed)));
+	}
+}

@@ -1,0 +1,64 @@
+package basicUI;
+
+import game.Team;
+
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
+import mainclasses.Game;
+
+public class EndGameScreen extends JFrame{
+	Game game;
+	/**
+	 * will be initialised when the Game is over
+	 * Score becomes 5 for one of the team, or Timer runs out
+	 * in case the timer run out and the scores are level print Game Draw
+	 * print the Name of the Team won
+	 * restart button and quit button  
+	 */
+	private static final long serialVersionUID = 1L;
+	public EndGameScreen(Game game, Team team) {
+		this.game = game;
+		setTitle("Game Over");
+		setSize(700,200);
+		setLocationRelativeTo(null);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		
+		JPanel panel = new JPanel();
+		
+		JLabel winner = new JLabel("Winner is : "+ team.getTeamName());
+		panel.add(winner);
+
+		JButton exit = new JButton("Exit the Game");
+		exit.setSize(150,20);
+
+		exit.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				// TODO Auto-generated method stub
+				System.exit(0);
+			}	
+		});
+
+		this.add(exit);
+		JButton restart = new JButton("Restart");
+
+		restart.setSize(75, 20);
+		restart.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				SelectFormation restartScreen = new SelectFormation();
+				setVisible(false); // Hide current frame
+			}	
+		});
+		panel.add(restart);
+		this.add(panel);
+	}
+
+}

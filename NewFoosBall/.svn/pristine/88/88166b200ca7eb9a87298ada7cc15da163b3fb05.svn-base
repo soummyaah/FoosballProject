@@ -1,0 +1,8 @@
+package difficulty;
+
+public interface Difficulty {
+
+	public static final int error = 0;
+	
+	
+}

@@ -1,0 +1,51 @@
+package mainclasses;
+
+import javax.swing.SwingUtilities;
+
+import threads.BallLogicThread;
+import threads.RenderingThread;
+import threads.TeamLogicThread;
+import threads.TimerThread;
+import basicUI.SplashScreen;
+
+public class Start {
+	
+	Game game = null;
+	Thread teamThreadA;
+	Thread teamThreadB;
+	Thread ballThread;
+	Thread gameTimerThread;
+	Thread renderingThread;
+	
+	public Start(Game game) {
+		this.game = game;
+		this.teamThreadA = new Thread(new TeamLogicThread(this.game, this.game.teamA));
+		this.teamThreadB = new Thread(new TeamLogicThread(this.game, this.game.teamB));
+		this.ballThread = new Thread(new BallLogicThread(this.game, this.game.ball));
+		this.renderingThread = new Thread(new RenderingThread(this.game));
+		this.gameTimerThread = new Thread(new TimerThread(this.game));
+		this.gameOn();
+	}	
+	
+    private void gameOn() {
+		this.ballThread.start();
+		this.teamThreadA.start();
+		this.teamThreadB.start();
+		this.gameTimerThread.start();
+		this.renderingThread.start();
+    }
+    
+  
+    public static void main(String[] args) 
+    {
+    	///creating a thread for the Start Class, anon
+    	SwingUtilities.invokeLater(new Runnable() 
+    	{            
+    		public void run() 
+    		{                
+    			SplashScreen initScreen = new SplashScreen();
+    		}
+    	});
+      }
+}
+

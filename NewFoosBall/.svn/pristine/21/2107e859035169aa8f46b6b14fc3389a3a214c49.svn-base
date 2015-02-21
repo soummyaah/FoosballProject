@@ -1,0 +1,5 @@
+package difficulty;
+
+public interface EasyDifficulty extends Difficulty {
+
+}
